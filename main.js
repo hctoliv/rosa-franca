@@ -125,7 +125,7 @@
   /* ================= revelar por interseção ================= */
   const io = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-  }), { rootMargin: '0px 0px -12% 0px' });
+  }), { rootMargin: '0px 0px -6% 0px' });
   $$('[data-words], [data-clip]').forEach(el => io.observe(el));
 
   // vídeos só tocam quando aparecem
@@ -136,12 +136,19 @@
 
   /* ================= nav ================= */
   const nav = $('.nav'), toggle = $('.nav__toggle'), float = $('.float');
-  const closeMenu = () => { nav.classList.remove('is-open'); toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', 'Abrir menu'); };
+  // com o menu aberto a página para de rolar por baixo
+  const lockScroll = on => { document.documentElement.style.overflow = on ? 'hidden' : ''; if (lenis) on ? lenis.stop() : lenis.start(); };
+  const closeMenu = () => {
+    if (!nav.classList.contains('is-open')) return;
+    nav.classList.remove('is-open'); toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', 'Abrir menu'); lockScroll(false);
+  };
   toggle.addEventListener('click', () => {
     const open = nav.classList.toggle('is-open');
     toggle.setAttribute('aria-expanded', open);
     toggle.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu');
+    lockScroll(open);
   });
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
   /* ================= rolagem suave ================= */
   let lenis = null;
@@ -305,10 +312,12 @@
   tickLoop();
 
   /* ================= sequência da obra (canvas) ================= */
-  const FRAMES = 155;
+  // celular em pé: menos quadros, já recortados no enquadramento vertical (menos memória e download)
+  const PHONE = matchMedia('(max-width: 760px) and (orientation: portrait)').matches;
+  const FRAMES = PHONE ? 78 : 155;
   const canvas = $('[data-obra-canvas]'), ctx = canvas.getContext('2d');
   const frames = new Array(FRAMES);
-  const frameSrc = i => `img/seq/f${String(i + 1).padStart(3, '0')}.webp`;
+  const frameSrc = i => `img/${PHONE ? 'seq-m' : 'seq'}/f${String(i + 1).padStart(3, '0')}.webp`;
   let curFrame = 0, drawn = -1;
   const sizeCanvas = () => {
     const dpr = Math.min(devicePixelRatio || 1, 1.6);
@@ -334,7 +343,7 @@
     let w, h;
     if (cr > ir) { w = cw; h = cw / ir; } else { h = ch; w = ch * ir; }
     // em tela vertical, puxa o enquadramento um pouco para a esquerda (onde ficam os móveis)
-    const fx = cr < 1 ? .45 : .5;
+    const fx = cr < 1 && !PHONE ? .45 : .5;
     ctx.drawImage(img, (cw - w) * fx, (ch - h) / 2, w, h);
   }
   const loadFrame = i => new Promise(r => {
@@ -355,7 +364,8 @@
     const worker = async () => { while (order.length) await loadFrame(order.shift()); };
     await Promise.all(Array.from({ length: 6 }, worker));
   };
-  addEventListener('resize', sizeCanvas);
+  let lastW = innerWidth;
+  addEventListener('resize', () => { if (Math.abs(innerWidth - lastW) < 2 && canvas.width) return; lastW = innerWidth; sizeCanvas(); });
   const chaps = $$('[data-chap]'), needle = $('[data-needle]'), pct = $('[data-obra-pct]');
   const CHAP_AT = [0, 25 / 154, 50 / 154, 85 / 154];
   let chapIdx = 0;
@@ -415,6 +425,7 @@
 
   /* ================= GSAP ================= */
   gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
   if (lenis) {
     lenis.on('scroll', e => { ScrollTrigger.update(); scrollVel = clamp(e.velocity || 0, -60, 60); onScroll(e.scroll); });
     gsap.ticker.add(t => lenis.raf(t * 1000));
@@ -464,11 +475,6 @@
     gsap.fromTo(orb, { scale: .55, opacity: 0, rotate: -6, yPercent: -50 }, { scale: 1, opacity: 1, rotate: 0, yPercent: -50, ease: 'none',
       scrollTrigger: { trigger: '[data-manifesto]', start: 'top 60%', end: 'top top', scrub: true } });
   });
-  mm.add('(max-width: 760px)', () => {
-    gsap.set(orb, { top: 'auto', bottom: '6vh', right: 'var(--pad)', width: '38vw' });
-    gsap.fromTo(orb, { scale: .55, opacity: 0, yPercent: 0 }, { scale: 1, opacity: 1, yPercent: 0, ease: 'none',
-      scrollTrigger: { trigger: '[data-manifesto]', start: 'top 60%', end: 'top top', scrub: true } });
-  });
   ScrollTrigger.create({ trigger: '[data-manifesto]', start: 'top top', end: 'bottom bottom', scrub: true,
     onUpdate: s => light(scrubWords, clamp(s.progress * 1.15, 0, 1)) });
 
@@ -505,10 +511,10 @@
   const walls = $$('.room rect, .planta__wall, .planta__dims line');
   walls.forEach(r => { const L = r.getTotalLength ? r.getTotalLength() : 800; r.style.strokeDasharray = L; r.style.strokeDashoffset = L; });
   gsap.to(walls, { strokeDashoffset: 0, duration: 1.8, stagger: .06, ease: 'power2.inOut',
-    scrollTrigger: { trigger: '.planta', start: 'top 70%', once: true },
+    scrollTrigger: { trigger: '.planta', start: 'top 88%', once: true },
     onComplete: () => walls.forEach(r => { r.style.strokeDasharray = 'none'; }) });
   gsap.from('.room text, .planta__hall, .planta__hall-t', { opacity: 0, y: 8, duration: .8, stagger: .03, ease: 'power2.out', delay: .9,
-    scrollTrigger: { trigger: '.planta', start: 'top 70%', once: true } });
+    scrollTrigger: { trigger: '.planta', start: 'top 88%', once: true } });
   gsap.from('.plan__side > *', { y: 60, opacity: 0, stagger: .15, duration: 1.2, ease: 'power3.out',
     scrollTrigger: { trigger: '.plan__side', start: 'top 80%' } });
 
