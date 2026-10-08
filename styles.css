@@ -208,11 +208,11 @@ em { font-style: italic; }
   background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 120px 120px;
   mask-image: linear-gradient(180deg, #000, transparent 60%); -webkit-mask-image: linear-gradient(180deg, #000, transparent 60%); }
 .manifesto__stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; overflow: hidden; padding: 80px 0; }
-.manifesto__text { position: relative; z-index: 2; max-width: 19ch; margin: 0; font: 200 clamp(34px, 5vw, 76px)/1.08 var(--display); letter-spacing: -.025em; }
+.manifesto__text { position: relative; z-index: 2; max-width: min(19ch, 50vw); margin: 0; font: 200 clamp(30px, 4.1vw, 66px)/1.1 var(--display); letter-spacing: -.025em; }
 .manifesto__text .w { color: rgba(30,23,18,.12); transition: color .3s linear; }
 .manifesto__text .w.on { color: var(--ink); }
 .manifesto__text em .w.on { color: var(--gold); }
-.manifesto__orb { position: absolute; z-index: 1; right: max(var(--pad), calc((100vw - 1240px) / 2)); top: 50%; width: clamp(220px, 30vw, 460px); aspect-ratio: 3 / 4;
+.manifesto__orb { position: absolute; z-index: 1; right: max(var(--pad), calc((100vw - 1240px) / 2)); top: 50%; width: min(clamp(220px, 27vw, 400px), 52vh); aspect-ratio: 3 / 4;
   border-radius: 999px 999px 4px 4px; overflow: hidden; transform: translateY(-50%) scale(.6); opacity: 0; box-shadow: 0 40px 80px -30px rgba(30,23,18,.5); }
 .manifesto__orb video { width: 100%; height: 100%; object-fit: cover; }
 
@@ -550,6 +550,7 @@ em { font-style: italic; }
 }
 @media (max-width: 640px) {
   .nav__name small { display: none; }
+  .manifesto__text { max-width: none; font-size: clamp(28px, 7.6vw, 40px); }
   .nav__name { font-size: 13px; letter-spacing: .2em; }
   .obra__head { top: 12vh; }
   .obra__chapters { bottom: 100px; }
